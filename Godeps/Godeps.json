@@ -1,0 +1,52 @@
+{
+	"ImportPath": "github.com/nyodas/shvl",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Deps": [
+		{
+			"ImportPath": "github.com/cloudfoundry-incubator/candiedyaml",
+			"Rev": "99c3df83b51532e3615f851d8c2dbb638f5313bf"
+		},
+		{
+			"ImportPath": "github.com/ghodss/yaml",
+			"Rev": "aa0c862057666179de291b67d9f093d12b5a8473"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Comment": "v1.0.0-39-ge8f0f8a",
+			"Rev": "e8f0f8aaa98dfb6586cbdf2978d511e3199a960a"
+		},
+		{
+			"ImportPath": "github.com/kvz/logstreamer",
+			"Rev": "a635b98146f0f465f3413a0b8ec481f3698d3fc2"
+		},
+		{
+			"ImportPath": "github.com/mgutz/ansi",
+			"Rev": "c286dcecd19ff979eeb73ea444e479b903f2cfcb"
+		},
+		{
+			"ImportPath": "github.com/n0rad/go-erlog",
+			"Rev": "4b041df7334d6008f8ceaa9e6ed03d43aa9c1356"
+		},
+		{
+			"ImportPath": "github.com/n0rad/go-erlog/data",
+			"Rev": "4b041df7334d6008f8ceaa9e6ed03d43aa9c1356"
+		},
+		{
+			"ImportPath": "github.com/n0rad/go-erlog/errs",
+			"Rev": "4b041df7334d6008f8ceaa9e6ed03d43aa9c1356"
+		},
+		{
+			"ImportPath": "github.com/n0rad/go-erlog/logs",
+			"Rev": "4b041df7334d6008f8ceaa9e6ed03d43aa9c1356"
+		},
+		{
+			"ImportPath": "github.com/n0rad/go-erlog/register",
+			"Rev": "4b041df7334d6008f8ceaa9e6ed03d43aa9c1356"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ssh/terminal",
+			"Rev": "8e06e8ddd9629eb88639aba897641bff8031f1d3"
+		}
+	]
+}
