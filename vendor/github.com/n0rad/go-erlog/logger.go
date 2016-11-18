@@ -31,7 +31,7 @@ func (l *ErlogFactory) GetLog(name string) logs.Log {
 	return log
 }
 
-func (l *ErlogFactory) GetCustomLog(name string,appender Appender) logs.Log {
+func (l *ErlogFactory) GetCustomLog(name string, appender Appender) logs.Log {
 	if name == "" {
 		return l.defaultLog
 	}
@@ -42,7 +42,6 @@ func (l *ErlogFactory) GetCustomLog(name string,appender Appender) logs.Log {
 	}
 	return log
 }
-
 
 type ErlogLogger struct {
 	Appenders []Appender
