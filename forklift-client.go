@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/n0rad/go-erlog"
 	"github.com/n0rad/go-erlog/logs"
+	_ "github.com/n0rad/go-erlog/register"
 	"github.com/nyodas/forklift/erlog-forklift"
 )
 
@@ -33,10 +34,9 @@ var logLevel = flag.String("L", "info", "Loglevel  (default is INFO)")
 
 func main() {
 	flag.Parse()
-	erlogFactory := erlog.NewErlogFactory()
-	logs.RegisterLoggerFactory(erlogFactory)
 	customAppender := erlog_forklift.NewForkliftErlogWriterAppender(os.Stdout)
-	logWs := erlogFactory.GetCustomLog("logws", customAppender)
+	logWs := logs.GetLog("logWs")
+	logWs.(*erlog.ErlogLogger).Appenders = []erlog.Appender{customAppender}
 
 	level, err := logs.ParseLevel(*logLevel)
 	if err != nil {
