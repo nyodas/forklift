@@ -29,8 +29,21 @@ type commandOutputLog struct {
 }
 
 var addr = flag.String("addr", "localhost:8080", "http service address")
-var args = flag.String("args", "-ls .", "Args.")
+var args = flag.String("args", "10", "Args.")
 var logLevel = flag.String("L", "info", "Loglevel  (default is INFO)")
+
+func sendMessage(msg Message, c *websocket.Conn) {
+	messageJson, err := json.Marshal(msg)
+	if err != nil {
+		logs.WithE(err).WithField("args", msg.Args).WithField("type", msg.Type).WithField("content", msg.Content).Error("Failed to Marshal Json")
+		return
+	}
+	err = c.WriteMessage(websocket.TextMessage, messageJson)
+	if err != nil {
+		logs.WithE(err).WithField("args", msg.Args).WithField("type", msg.Type).WithField("content", msg.Content).Error("Failed to Send message")
+		return
+	}
+}
 
 func main() {
 	flag.Parse()
@@ -55,19 +68,19 @@ func main() {
 	if err != nil {
 		logs.WithE(err).WithField("url", u.String()).Fatal("Failed to connect.")
 	}
-	defer c.Close()
 
+	isClosed := false
 	done := make(chan struct{})
-
 	go func() {
 		defer c.Close()
 		for {
 			m := commandOutputLog{}
 			err := c.ReadJSON(&m)
 			if err != nil {
-				logs.WithE(err).Error("Failed to read the incoming message.")
+				logs.WithE(err).Info("Socket is closed.")
 				close(done)
-				return
+				isClosed = true
+				break
 			}
 			m.Msg = strings.TrimRight(m.Msg, "\n")
 			if m.Prefix == "stdout" {
@@ -75,43 +88,36 @@ func main() {
 			} else if m.Prefix == "stderr" {
 				logWs.Error(m.Msg)
 			}
-
-			if _, _, err := c.NextReader(); err != nil {
-				close(done)
-				return
-			}
 		}
 	}()
 
-	message := Message{
+	logs.Info("Sending command")
+	msg := Message{
 		Type:    "command",
 		Content: "ls",
+		Args:    strings.Split(*args, " "),
 	}
-	message.Args = strings.Split(*args, " ")
-	messageJson, err := json.Marshal(message)
-	if err != nil {
-		logs.WithE(err).WithField("args", message.Args).WithField("type", message.Type).WithField("content", message.Content).Error("Failed to Marshal Json")
-		return
-	}
-	err = c.WriteMessage(websocket.TextMessage, messageJson)
-	if err != nil {
-		logs.WithE(err).WithField("args", message.Args).WithField("type", message.Type).WithField("content", message.Content).Error("Failed to Send message")
-		return
-	}
+	sendMessage(msg, c)
 
 	for {
 		select {
 		case <-interrupt:
-			logs.Info("Received interrupt... Closing")
-
+			logs.Info("Received interrupt... Sending kill")
+			messageKill := Message{
+				Type: "kill",
+			}
+			sendMessage(messageKill, c)
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				logs.WithE(err).Error("Failed to Close the websocket connection.")
 				return
 			}
 		case <-done:
-			logs.Info("Closing")
-			c.Close()
+			if isClosed == false {
+				logs.Info("Closing Websocket")
+				c.Close()
+			}
+			logs.Debug("We're done.Exiting")
 			os.Exit(0)
 			return
 		}
