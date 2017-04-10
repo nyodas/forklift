@@ -2,18 +2,18 @@ package logstreamer
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"github.com/nyodas/forklift/msg"
 )
 
-type LogstreamerWs struct {
-	Logger *log.Logger
-	buf    *bytes.Buffer
+type LogStreamerWs struct {
+	LoggerStdout *LogStreamerTerm
+	LoggerStderr *LogStreamerTerm
+	buf          *bytes.Buffer
 	// if true, saves output in memory
 	record  bool
 	persist string
@@ -21,26 +21,21 @@ type LogstreamerWs struct {
 	ws      websocket.Conn
 }
 
-type commandOutputLog struct {
-	Type   string
-	Msg    string
-	Prefix string
-}
-
-func NewWsLogstreamer(logger *log.Logger, prefix string, record bool, wsConn websocket.Conn) *LogstreamerWs {
-	streamer := &LogstreamerWs{
-		Logger:  logger,
-		buf:     bytes.NewBuffer([]byte("")),
-		prefix:  prefix,
-		record:  record,
-		ws:      wsConn,
-		persist: "",
+func NewLogStreamerWs(prefix string, record bool, wsConn websocket.Conn, name string) *LogStreamerWs {
+	streamer := &LogStreamerWs{
+		LoggerStdout: NewLogStreamerTerm("stdout", false, name),
+		LoggerStderr: NewLogStreamerTerm("stderr", false, name),
+		buf:          bytes.NewBuffer([]byte("")),
+		prefix:       prefix,
+		record:       record,
+		ws:           wsConn,
+		persist:      "",
 	}
 
 	return streamer
 }
 
-func (l *LogstreamerWs) Write(p []byte) (n int, err error) {
+func (l *LogStreamerWs) Write(p []byte) (n int, err error) {
 	if n, err = l.buf.Write(p); err != nil {
 		return
 	}
@@ -49,7 +44,7 @@ func (l *LogstreamerWs) Write(p []byte) (n int, err error) {
 	return
 }
 
-func (l *LogstreamerWs) Close() error {
+func (l *LogStreamerWs) Close() error {
 	if err := l.Flush(); err != nil {
 		return err
 	}
@@ -57,7 +52,7 @@ func (l *LogstreamerWs) Close() error {
 	return nil
 }
 
-func (l *LogstreamerWs) Flush() error {
+func (l *LogStreamerWs) Flush() error {
 	var p []byte
 	if _, err := l.buf.Read(p); err != nil {
 		return err
@@ -67,7 +62,7 @@ func (l *LogstreamerWs) Flush() error {
 	return nil
 }
 
-func (l *LogstreamerWs) OutputLines() error {
+func (l *LogStreamerWs) OutputLines() error {
 	for {
 		line, err := l.buf.ReadString('\n')
 
@@ -96,31 +91,35 @@ func (l *LogstreamerWs) OutputLines() error {
 	return nil
 }
 
-func (l *LogstreamerWs) FlushRecord() string {
+func (l *LogStreamerWs) FlushRecord() string {
 	buffer := l.persist
 	l.persist = ""
 	return buffer
 }
 
-func (l *LogstreamerWs) out(str string) {
+func (l *LogStreamerWs) out(str string) {
 	if len(str) < 1 {
 		return
 	}
-	msg := commandOutputLog{
-		Type:   "log",
-		Msg:    str,
+	logMsg := msg.CommandOutputLog{
+		Message: msg.Message{
+			Type:    "log",
+			Content: str,
+		},
 		Prefix: l.prefix,
-	}
-	msgJson, err := json.Marshal(msg)
-	if err != nil {
-		fmt.Println(err)
-		return
 	}
 	if l.record == true {
 		l.persist = l.persist + str
 	}
-	if err := l.ws.WriteMessage(1, msgJson); err != nil {
+
+	if err := logMsg.Send(&l.ws); err != nil {
 		fmt.Println(err)
 	}
-	l.Logger.Print(str)
+	if l.prefix == "stdout" {
+		l.LoggerStdout.out(str)
+		l.LoggerStdout.Flush()
+	} else {
+		l.LoggerStderr.out(str)
+		l.LoggerStderr.Flush()
+	}
 }

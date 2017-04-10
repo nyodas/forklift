@@ -1,49 +1,27 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
+	"fmt"
 	"net/url"
 	"os"
 	"os/signal"
-
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"github.com/mgutz/str"
 	"github.com/n0rad/go-erlog"
 	"github.com/n0rad/go-erlog/logs"
 	_ "github.com/n0rad/go-erlog/register"
 	"github.com/nyodas/forklift/erlog-forklift"
+	"github.com/nyodas/forklift/msg"
 )
 
-type Message struct {
-	Type    string
-	Content string
-	Args    []string
-}
-
-type commandOutputLog struct {
-	Type   string
-	Msg    string
-	Prefix string
-}
-
 var addr = flag.String("addr", "localhost:8080", "http service address")
-var args = flag.String("args", "10", "Args.")
+var args = flag.String("args", "-l -a -h 'yolo'", "Args.")
+var execCmd = flag.String("e", "consume", "shortname of the command")
+var remoteArgs = flag.Bool("remoteargs", false, "print remote args")
 var logLevel = flag.String("L", "info", "Loglevel  (default is INFO)")
-
-func sendMessage(msg Message, c *websocket.Conn) {
-	messageJson, err := json.Marshal(msg)
-	if err != nil {
-		logs.WithE(err).WithField("args", msg.Args).WithField("type", msg.Type).WithField("content", msg.Content).Error("Failed to Marshal Json")
-		return
-	}
-	err = c.WriteMessage(websocket.TextMessage, messageJson)
-	if err != nil {
-		logs.WithE(err).WithField("args", msg.Args).WithField("type", msg.Type).WithField("content", msg.Content).Error("Failed to Send message")
-		return
-	}
-}
 
 func main() {
 	flag.Parse()
@@ -74,7 +52,7 @@ func main() {
 	go func() {
 		defer c.Close()
 		for {
-			m := commandOutputLog{}
+			m := msg.CommandOutputLog{}
 			err := c.ReadJSON(&m)
 			if err != nil {
 				logs.WithE(err).Info("Socket is closed.")
@@ -82,31 +60,42 @@ func main() {
 				isClosed = true
 				break
 			}
-			m.Msg = strings.TrimRight(m.Msg, "\n")
-			if m.Prefix == "stdout" {
-				logWs.Info(m.Msg)
-			} else if m.Prefix == "stderr" {
-				logWs.Error(m.Msg)
+			if m.Type == "log" {
+				m.Content = strings.TrimRight(m.Content, "\n")
+				if m.Prefix == "stdout" {
+					logWs.Info(m.Content)
+				} else if m.Prefix == "stderr" {
+					logWs.Error(m.Content)
+				}
+			}
+			if m.Type == "args" {
+				fmt.Printf(m.Content + "\n")
 			}
 		}
 	}()
 
-	logs.Info("Sending command")
-	msg := Message{
-		Type:    "command",
-		Content: "ls",
-		Args:    strings.Split(*args, " "),
+	msgRequest := msg.CommandRequest{
+		Message: msg.Message{
+			Type:    "exec",
+			Content: *execCmd,
+		},
+		Args: str.ToArgv(*args),
 	}
-	sendMessage(msg, c)
 
+	logs.Info("Sending command")
+	if *remoteArgs {
+		logs.Info("Gettings current args")
+		msgRequest.Type = "args"
+	}
+	_ = msgRequest.Send(c)
 	for {
 		select {
 		case <-interrupt:
 			logs.Info("Received interrupt... Sending kill")
-			messageKill := Message{
+			messageKill := msg.Message{
 				Type: "kill",
 			}
-			sendMessage(messageKill, c)
+			_ = messageKill.Send(c)
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				logs.WithE(err).Error("Failed to Close the websocket connection.")
@@ -115,7 +104,9 @@ func main() {
 		case <-done:
 			if isClosed == false {
 				logs.Info("Closing Websocket")
-				c.Close()
+				if c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")) != nil {
+					c.Close()
+				}
 			}
 			logs.Debug("We're done.Exiting")
 			os.Exit(0)

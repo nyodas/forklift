@@ -3,19 +3,19 @@ package erlog_forklift
 import (
 	"bytes"
 	"fmt"
-	"github.com/mgutz/ansi"
-	"github.com/n0rad/go-erlog"
-	"github.com/n0rad/go-erlog/data"
-	"github.com/n0rad/go-erlog/errs"
-	"github.com/n0rad/go-erlog/logs"
-	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"os"
 	"runtime"
 	"sort"
 	"strings"
 	"sync"
-	"time"
+
+	"github.com/mgutz/ansi"
+	"github.com/n0rad/go-erlog"
+	"github.com/n0rad/go-erlog/data"
+	"github.com/n0rad/go-erlog/errs"
+	"github.com/n0rad/go-erlog/logs"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var pathSkip int = 0
@@ -75,22 +75,15 @@ func (f *ErlogForkliftWriterAppender) SetLevel(level logs.Level) {
 
 func (f *ErlogForkliftWriterAppender) Fire(event *erlog.LogEvent) {
 	keys := f.prepareKeys(event.Fields)
-	var now string
-	if f.useColor {
-		now = time.Now().Format("15:04:05") // TODO prepare format ?
-	} else {
-		now = time.Now().Format("2006-01-02 15:04:05") // TODO prepare format ?
-	}
+
 	level := f.textLevel(event.Level)
 
 	b := &bytes.Buffer{}
 	if f.useColor {
-		fmt.Fprintf(b, "%s %s%-5s%s %s%-44s%s",
-			f.timeColor(event.Level)(now),
+		fmt.Fprintf(b, "%s%-5s%s %-44s%s",
 			f.levelColor(event.Level),
 			level,
 			reset,
-			f.textColor(event.Level),
 			event.Message,
 			reset)
 		for _, k := range keys {
@@ -98,8 +91,7 @@ func (f *ErlogForkliftWriterAppender) Fire(event *erlog.LogEvent) {
 			fmt.Fprintf(b, " %s%s%s=%+v", lvlColorInfo, k, reset, v)
 		}
 	} else {
-		fmt.Fprintf(b, "%s %-5s %-44s",
-			now,
+		fmt.Fprintf(b, "%-5s %-44s",
 			level,
 			event.Message,
 		)
