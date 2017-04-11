@@ -23,6 +23,15 @@ type Runner struct {
 	exitCode    []int
 }
 
+type RunnerSvc interface {
+	SetLogger(stdOut logstreamer.LogStreamer, stdErr logstreamer.LogStreamer)
+	Prepare()
+	Start() int
+	Stop()
+	LaunchTimeout() *time.Timer
+	ExecLoop()
+}
+
 func NewRunner(name string, commandCwd string, commandArgs []string) *Runner {
 	runner := &Runner{
 		commandName: name,

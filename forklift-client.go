@@ -82,7 +82,7 @@ func main() {
 		Args: str.ToArgv(*args),
 	}
 
-	logs.Info("Sending command")
+	logs.Info("Sending forkliftcmd")
 	if *remoteArgs {
 		logs.Info("Gettings current args")
 		msgRequest.Type = "args"
