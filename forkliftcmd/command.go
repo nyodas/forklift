@@ -14,6 +14,13 @@ var commandConfig *ForkliftCommandConfig
 
 type fcConfig ForkliftCommand
 
+type forkliftCommandConfigSvc interface {
+	SetDefaultCommand(commandName string, commandCwd string) ForkliftCommand
+	findCommand(cmdName string, config interface{}) (configCmd ForkliftCommand)
+	FindLocalCommand(cmdName string) (configCmd ForkliftCommand)
+	FindRemoteCommand(cmdName string) (configCmd ForkliftCommand)
+}
+
 type ForkliftCommand struct {
 	Shortname string        `json:"shortname",yaml:"shortname"`
 	Path      string        `json:"path",yaml:"path"`
@@ -61,6 +68,7 @@ func (cfg *ForkliftCommandConfig) SetDefaultCommand(commandName string, commandC
 		Shortname: "default",
 		Path:      commandName,
 		Timeout:   0,
+		Oneshot:   true,
 		Cwd:       commandCwd,
 	}
 	return cfg.defaultCommand

@@ -20,6 +20,7 @@ import (
 var addr = flag.String("addr", "localhost:8080", "http service address")
 var commandName = flag.String("c", "/bin/ls", "Command to run")
 var commandCwd = flag.String("cpwd", "/", "Cwd for the command")
+var commandArgs = flag.String("cargs", "", "Args for the default background command")
 var logLevel = flag.String("L", "info", "Loglevel  (default is INFO)")
 var execProc = flag.Bool("e", false, "Exec background process")
 var configPath = flag.String("config", "", "Config file path")
@@ -43,11 +44,16 @@ func main() {
 				WithField("config", cmdConfig).
 				Fatal("Failed to map forkliftcmd config file")
 		}
-		_ = cmdConfig.SetDefaultCommand(*commandName, *commandCwd)
 	}
+	defaultCmd := cmdConfig.SetDefaultCommand(*commandName, *commandCwd)
 
-	if *execProc && file != nil {
-		runBackgroundCmd(cmdConfig.LocalConfig)
+	if *execProc {
+		if file != nil && *commandArgs == "" {
+			runBackgroundCmds(cmdConfig.LocalConfig)
+		} else {
+			defaultCmd.Args = *commandArgs
+			runBackgroundCmd(defaultCmd)
+		}
 	}
 
 	forkliftHttpHandler := forkliftHttp.Handler{}
@@ -56,18 +62,22 @@ func main() {
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
-func runBackgroundCmd(cmdConfigs []forkliftcmd.ForkliftCommand) {
+func runBackgroundCmds(cmdConfigs []forkliftcmd.ForkliftCommand) {
 	for _, v := range cmdConfigs {
-		runner := forkliftRunner.NewRunner(v.Path, v.Cwd, str.ToArgv(v.Args))
-		runner.Timeout = v.Timeout
-		runner.Oneshot = v.Oneshot
-		done := make(chan struct{})
-		go func() {
-			runner.ExecLoop()
-			close(done)
-		}()
-		go exitHandler(done, runner)
+		runBackgroundCmd(v)
 	}
+}
+
+func runBackgroundCmd(cmdConfig forkliftcmd.ForkliftCommand) {
+	runner := forkliftRunner.NewRunner(cmdConfig.Path, cmdConfig.Cwd, str.ToArgv(cmdConfig.Args))
+	runner.Timeout = cmdConfig.Timeout
+	runner.Oneshot = cmdConfig.Oneshot
+	done := make(chan struct{})
+	go func() {
+		runner.ExecLoop()
+		close(done)
+	}()
+	go exitHandler(done, runner)
 }
 
 func exitHandler(done chan struct{}, runner *forkliftRunner.Runner) {
