@@ -145,6 +145,7 @@ func (r *Runner) ExecLoop() {
 				WithField("exitCode", r.Status).
 				WithField("lastStart", time.Since(lastStart)).
 				Info("Restart Limit Reached")
+			r.Status = 1
 			break
 		}
 	}
