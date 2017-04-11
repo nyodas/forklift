@@ -1,7 +1,6 @@
 package forkliftcmd
 
 import (
-	"sync"
 	"time"
 
 	"github.com/ahl5esoft/golang-underscore"
@@ -9,8 +8,8 @@ import (
 	"github.com/n0rad/go-erlog/logs"
 )
 
-var once sync.Once
-var commandConfig *ForkliftCommandConfig
+//var once sync.Once
+//var commandConfig *ForkliftCommandConfig
 
 type fcConfig ForkliftCommand
 
@@ -33,7 +32,7 @@ type ForkliftCommand struct {
 type ForkliftCommandConfig struct {
 	defaultCommand ForkliftCommand
 	LocalConfig    []ForkliftCommand `json:"command,omitempty"`
-	RemoteConfig   []ForkliftCommand `json:"remoteCommand"`
+	RemoteConfig   []ForkliftCommand `json:"remoteCommand,omitempty"`
 }
 
 func (fc *ForkliftCommand) UnmarshalJSON(b []byte) (err error) {
@@ -47,19 +46,20 @@ func (fc *ForkliftCommand) UnmarshalJSON(b []byte) (err error) {
 	return nil
 }
 
-func MapConfigFile(file []byte) (config *ForkliftCommandConfig, err error) {
+func MapConfigFile(fileContent []byte) (config ForkliftCommandConfig, err error) {
 	config = NewForkliftCommandConfig()
-	err = yaml.Unmarshal(file, config)
+	if len(fileContent) < 1 {
+		return config, nil
+	}
+	err = yaml.Unmarshal(fileContent, &config)
 	logs.WithField("config", config).
-		WithField("fileContent", string(file)).
+		WithField("fileContent", string(fileContent)).
 		Debug("Loading Command config")
 	return config, err
 }
 
-func NewForkliftCommandConfig() *ForkliftCommandConfig {
-	once.Do(func() {
-		commandConfig = &ForkliftCommandConfig{}
-	})
+func NewForkliftCommandConfig() ForkliftCommandConfig {
+	commandConfig := ForkliftCommandConfig{}
 	return commandConfig
 }
 

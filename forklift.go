@@ -37,14 +37,15 @@ func main() {
 		logs.WithE(err).WithField("configfile", configPath).
 			Error("Config file empty or missing")
 	}
-	var cmdConfig *forkliftcmd.ForkliftCommandConfig
-	if file != nil {
-		if cmdConfig, err = forkliftcmd.MapConfigFile(file); err != nil {
-			logs.WithE(err).WithField("configfile", configPath).
-				WithField("config", cmdConfig).
-				Fatal("Failed to map forkliftcmd config file")
-		}
+
+	var cmdConfig forkliftcmd.ForkliftCommandConfig
+	if cmdConfig, err := forkliftcmd.MapConfigFile(file); err != nil {
+		logs.WithE(err).WithField("configfile", configPath).
+			WithField("config", cmdConfig).
+			Fatal("Failed to map forkliftcmd config file")
 	}
+	logs.WithE(err).WithField("configfile", cmdConfig).
+		Debug("Failed to map forkliftcmd config file")
 	defaultCmd := cmdConfig.SetDefaultCommand(*commandName, *commandCwd)
 
 	if *execProc {
