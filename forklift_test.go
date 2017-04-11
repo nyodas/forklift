@@ -7,9 +7,6 @@ import (
 )
 
 func TestLoadConfigThrowError(t *testing.T) {
-	//d1 := []byte("test_load_config")
-	//err := ioutil.WriteFile("/tmp/.test", d1, 0644)
-
 	_, err := loadConfig("")
 	if err == nil {
 		t.Error("Path wasn't set but error wasn't thrown")
