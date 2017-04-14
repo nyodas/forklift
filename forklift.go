@@ -44,8 +44,6 @@ func main() {
 			WithField("config", cmdConfig).
 			Fatal("Failed to map forkliftcmd config file")
 	}
-	logs.WithE(err).WithField("configfile", cmdConfig).
-		Debug("Failed to map forkliftcmd config file")
 	defaultCmd := cmdConfig.SetDefaultCommand(*commandName, *commandCwd)
 
 	if *execProc {
