@@ -67,7 +67,7 @@ func (r *Runner) Start() int {
 	var timer *time.Timer
 	logs.WithField("command", r.commandName).
 		WithField("args", r.Args).
-		WithField("timeous", r.Timeout).
+		WithField("timeout", r.Timeout).
 		Debug("Executing command")
 
 	if err := r.process.Start(); err != nil {

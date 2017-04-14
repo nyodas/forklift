@@ -1,15 +1,15 @@
-command:
-  - shortname: "ls"
-    #timeout: 0
-    path: "/bin/ls"
-    args: "-l -a -h"
-    oneshot: true
-    cwd: /
-  - shortname: "sleep"
-    timeout: 1050
-    path: "/bin/sleep"
-    args: 100
-    cwd: /
+#command:
+#  - shortname: "ls"
+#    #timeout: 0
+#    path: "/bin/ls"
+#    args: "-l -a -h"
+#    oneshot: true
+#    cwd: /
+#  - shortname: "sleep"
+#    timeout: 1050
+#    path: "/bin/sleep"
+#    args: 100
+#    cwd: /
 
 remoteCommand:
   - shortname: "sleep"

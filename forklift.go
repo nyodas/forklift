@@ -17,9 +17,9 @@ import (
 	forkliftRunner "github.com/nyodas/forklift/runner"
 )
 
-var addr = flag.String("addr", "localhost:8080", "http service address")
+var addr = flag.String("addr", "0.0.0.0:8080", "http service address")
 var commandName = flag.String("c", "/bin/ls", "Command to run")
-var commandCwd = flag.String("cpwd", "/", "Cwd for the command")
+var commandCwd = flag.String("cwd", "/", "Cwd for the command")
 var commandArgs = flag.String("cargs", "", "Args for the default background command")
 var logLevel = flag.String("L", "info", "Loglevel  (default is INFO)")
 var execProc = flag.Bool("e", false, "Exec background process")
@@ -38,12 +38,14 @@ func main() {
 			Error("Config file empty or missing")
 	}
 
-	var cmdConfig forkliftcmd.ForkliftCommandConfig
-	if cmdConfig, err := forkliftcmd.MapConfigFile(file); err != nil {
+	cmdConfig, err := forkliftcmd.MapConfigFile(file)
+	if err != nil {
 		logs.WithE(err).WithField("configfile", configPath).
 			WithField("config", cmdConfig).
 			Fatal("Failed to map forkliftcmd config file")
 	}
+	logs.WithE(err).WithField("configfile", configPath).
+		WithField("config", cmdConfig).Debug("cmdConfig Content")
 	defaultCmd := cmdConfig.SetDefaultCommand(*commandName, *commandCwd)
 
 	if *execProc {
@@ -55,7 +57,9 @@ func main() {
 		}
 	}
 
-	forkliftHttpHandler := forkliftHttp.Handler{}
+	forkliftHttpHandler := forkliftHttp.Handler{
+		ForkliftConfig: &cmdConfig,
+	}
 	http.HandleFunc("/echo", forkliftHttpHandler.ExecRemoteCmd)
 	http.HandleFunc("/exec", forkliftHttpHandler.ExecRemoteCmd)
 	log.Fatal(http.ListenAndServe(*addr, nil))

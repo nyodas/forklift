@@ -17,11 +17,11 @@ var upgrader = websocket.Upgrader{
 }
 
 type Handler struct {
+	ForkliftConfig *forkliftcmd.ForkliftCommandConfig
 }
 
 func (h *Handler) ExecRemoteCmd(w http.ResponseWriter, r *http.Request) {
 	var forkliftExec *runner.Runner
-	forkliftConfig := forkliftcmd.NewForkliftCommandConfig()
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logs.WithE(err).WithField("from", r.RemoteAddr).
@@ -43,7 +43,7 @@ func (h *Handler) ExecRemoteCmd(w http.ResponseWriter, r *http.Request) {
 		cmdName := m.Content
 		if m.Type == "exec" || m.Type == "command" {
 			cmdName := m.Content
-			configLocalCmd := forkliftConfig.FindRemoteCommand(cmdName)
+			configLocalCmd := h.ForkliftConfig.FindRemoteCommand(cmdName)
 			logs.WithField("command", configLocalCmd.Shortname).
 				WithField("args", m.Args).
 				Info("Launching command")
@@ -61,7 +61,7 @@ func (h *Handler) ExecRemoteCmd(w http.ResponseWriter, r *http.Request) {
 			}()
 		}
 		if m.Type == "args" {
-			configRemoteCmd := forkliftConfig.FindLocalCommand(cmdName)
+			configRemoteCmd := h.ForkliftConfig.FindLocalCommand(cmdName)
 			logs.WithField("args", configRemoteCmd.Args).Debug("Gettings Args")
 			argsMsg := msg.Message{Type: "args", Content: configRemoteCmd.Args}
 			_ = argsMsg.Send(c)

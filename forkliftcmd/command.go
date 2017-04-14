@@ -47,7 +47,6 @@ func (fc *ForkliftCommand) UnmarshalJSON(b []byte) (err error) {
 }
 
 func MapConfigFile(fileContent []byte) (config ForkliftCommandConfig, err error) {
-	config = NewForkliftCommandConfig()
 	if len(fileContent) < 1 {
 		return config, nil
 	}
