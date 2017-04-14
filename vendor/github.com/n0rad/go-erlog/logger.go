@@ -31,18 +31,6 @@ func (l *ErlogFactory) GetLog(name string) logs.Log {
 	return log
 }
 
-func (l *ErlogFactory) GetCustomLog(name string, appender Appender) logs.Log {
-	if name == "" {
-		return l.defaultLog
-	}
-	log := l.logs[name]
-	if log == nil {
-		log = newCustomLog(appender)
-		l.logs[name] = log
-	}
-	return log
-}
-
 type ErlogLogger struct {
 	Appenders []Appender
 	Level     logs.Level
@@ -51,13 +39,6 @@ type ErlogLogger struct {
 func newLog() *ErlogLogger {
 	return &ErlogLogger{
 		Appenders: []Appender{NewErlogWriterAppender(os.Stderr)},
-		Level:     logs.INFO,
-	}
-}
-
-func newCustomLog(appender Appender) *ErlogLogger {
-	return &ErlogLogger{
-		Appenders: []Appender{appender},
 		Level:     logs.INFO,
 	}
 }

@@ -1,0 +1,45 @@
+hash: b04cc96f31ad9aacd140c6ade8bce2d13708b922408609aaf536739d16c9fead
+updated: 2017-04-13T13:55:38.652357071+02:00
+imports:
+- name: github.com/ahl5esoft/golang-underscore
+  version: 4c4738d8de61796a6f759d2813f4ec3ae97baf89
+- name: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
+- name: github.com/ghodss/yaml
+  version: aa0c862057666179de291b67d9f093d12b5a8473
+- name: github.com/gorilla/websocket
+  version: e8f0f8aaa98dfb6586cbdf2978d511e3199a960a
+- name: github.com/kvz/logstreamer
+  version: a635b98146f0f465f3413a0b8ec481f3698d3fc2
+- name: github.com/mgutz/ansi
+  version: c286dcecd19ff979eeb73ea444e479b903f2cfcb
+- name: github.com/mgutz/str
+  version: 968bf66e3da857419e4f6e71b2d5c9ae95682dc4
+- name: github.com/n0rad/go-erlog
+  version: 4b041df7334d6008f8ceaa9e6ed03d43aa9c1356
+  subpackages:
+  - data
+  - errs
+  - logs
+  - register
+- name: github.com/wsxiaoys/terminal
+  version: 0940f3fc43a0ed42d04916b1c04578462c650b09
+  subpackages:
+  - color
+- name: golang.org/x/crypto
+  version: 8e06e8ddd9629eb88639aba897641bff8031f1d3
+  subpackages:
+  - ssh/terminal
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert
