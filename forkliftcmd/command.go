@@ -21,12 +21,13 @@ type forkliftCommandConfigSvc interface {
 }
 
 type ForkliftCommand struct {
-	Shortname string        `json:"shortname",yaml:"shortname"`
-	Path      string        `json:"path",yaml:"path"`
-	Args      string        `json:"args,omitempty",yaml:"args,omitempty"`
-	Timeout   time.Duration `json:"timeout,omitempty",yaml:"timeout,omitempty"`
-	Cwd       string        `json:"cwd",yaml:"cwd"`
-	Oneshot   bool          `json:"oneshot",yaml:"oneshot"`
+	Shortname    string        `json:"shortname",yaml:"shortname"`
+	Path         string        `json:"path",yaml:"path"`
+	Args         string        `json:"args,omitempty",yaml:"args,omitempty"`
+	Timeout      time.Duration `json:"timeout,omitempty",yaml:"timeout,omitempty"`
+	Cwd          string        `json:"cwd",yaml:"cwd"`
+	Oneshot      bool          `json:"oneshot",yaml:"oneshot"`
+	PostStopHook string        `json:"postStopHook,omitempty",yaml:"postStopHook,omitempty"`
 }
 
 type ForkliftCommandConfig struct {

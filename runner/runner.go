@@ -11,16 +11,17 @@ import (
 )
 
 type Runner struct {
-	commandName string
-	commandCwd  string
-	Args        []string
-	TermStdOut  logstreamer.LogStreamer
-	TermStdErr  logstreamer.LogStreamer
-	process     *exec.Cmd
-	Timeout     time.Duration
-	Status      int
-	Oneshot     bool
-	exitCode    []int
+	commandName  string
+	commandCwd   string
+	Args         []string
+	TermStdOut   logstreamer.LogStreamer
+	TermStdErr   logstreamer.LogStreamer
+	process      *exec.Cmd
+	Timeout      time.Duration
+	Status       int
+	Oneshot      bool
+	PostStopHook string
+	exitCode     []int
 }
 
 type RunnerSvc interface {
@@ -139,13 +140,19 @@ func (r *Runner) ExecLoop() {
 		}
 		lastStart = time.Now()
 		_ = r.Start()
-		if restartIntTime == 3 || restartIntStatus == 3 || r.Oneshot {
+		if restartIntTime == 3 || restartIntStatus == 3 {
 			logs.WithField("restartTime", restartIntTime).
 				WithField("restartFail", restartIntStatus).
 				WithField("exitCode", r.Status).
 				WithField("lastStart", time.Since(lastStart)).
 				Info("Restart Limit Reached")
 			r.Status = 1
+			break
+		} else if r.Oneshot {
+			cmd := exec.Command(
+				r.PostStopHook,
+			)
+			cmd.Run()
 			break
 		}
 	}

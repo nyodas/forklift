@@ -24,6 +24,7 @@ var commandArgs = flag.String("cargs", "", "Args for the default background comm
 var logLevel = flag.String("L", "info", "Loglevel  (default is INFO)")
 var execProc = flag.Bool("e", false, "Exec background process")
 var configPath = flag.String("config", "", "Config file path")
+var postStopHook = flag.String("S", "", "PostStopHook when exec.")
 
 func main() {
 	flag.Parse()
@@ -53,6 +54,7 @@ func main() {
 			runBackgroundCmds(cmdConfig.LocalConfig)
 		} else {
 			defaultCmd.Args = *commandArgs
+			defaultCmd.PostStopHook = *postStopHook
 			runBackgroundCmd(defaultCmd)
 		}
 	}
@@ -62,6 +64,7 @@ func main() {
 	}
 	http.HandleFunc("/echo", forkliftHttpHandler.ExecRemoteCmd)
 	http.HandleFunc("/exec", forkliftHttpHandler.ExecRemoteCmd)
+	http.HandleFunc("/healthz", forkliftHttpHandler.Healthz)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
@@ -75,6 +78,7 @@ func runBackgroundCmd(cmdConfig forkliftcmd.ForkliftCommand) {
 	runner := forkliftRunner.NewRunner(cmdConfig.Path, cmdConfig.Cwd, str.ToArgv(cmdConfig.Args))
 	runner.Timeout = cmdConfig.Timeout
 	runner.Oneshot = cmdConfig.Oneshot
+	runner.PostStopHook = cmdConfig.PostStopHook
 	done := make(chan struct{})
 	go func() {
 		runner.ExecLoop()
